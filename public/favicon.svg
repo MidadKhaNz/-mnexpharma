@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="teal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F766E"/>
+      <stop offset="100%" stop-color="#14B8A6"/>
+    </linearGradient>
+  </defs>
+  <!-- M strokes -->
+  <path d="M5 54 L5 14 L22 38 L32 20" stroke="url(#teal)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M32 20 L32 54" stroke="url(#teal)" stroke-width="6.5" stroke-linecap="round"/>
+  <!-- X right strokes -->
+  <path d="M32 20 L57 54" stroke="url(#teal)" stroke-width="6.5" stroke-linecap="round"/>
+  <path d="M32 54 L57 20" stroke="url(#teal)" stroke-width="6.5" stroke-linecap="round"/>
+  <!-- Pill capsule over crossing point -->
+  <g transform="translate(44.5,18) rotate(-45)">
+    <rect x="-13" y="-5" width="26" height="10" rx="5" fill="#CBD5E1"/>
+    <rect x="-13" y="-5" width="13" height="10" rx="5" fill="#94A3B8"/>
+  </g>
+</svg>
