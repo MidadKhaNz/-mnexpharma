@@ -1,5 +1,0 @@
-package com.mnexpharma.mnexpharma_mobile
-
-import io.flutter.embedding.android.FlutterActivity
-
-class MainActivity : FlutterActivity()
