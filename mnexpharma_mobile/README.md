@@ -139,53 +139,6 @@ Email: admin@mnexpharma.com
 Password: admin123
 ```
 
-## Screenshots
-
-Add screenshots in a `screenshots/` folder and update the links below.
-
-```text
-screenshots/
-  01-welcome.png
-  02-customer-shop.png
-  03-medicine-details.png
-  04-cart-checkout.png
-  05-prescription-upload.png
-  06-order-tracking.png
-  07-staff-dashboard.png
-  08-prescription-review.png
-  09-delivery-update.png
-```
-
-Suggested README screenshot layout:
-
-```markdown
-![Welcome](screenshots/01-welcome.png)
-![Customer Shop](screenshots/02-customer-shop.png)
-![Medicine Details](screenshots/03-medicine-details.png)
-![Checkout](screenshots/04-cart-checkout.png)
-![Prescription Upload](screenshots/05-prescription-upload.png)
-![Order Tracking](screenshots/06-order-tracking.png)
-![Staff Dashboard](screenshots/07-staff-dashboard.png)
-![Prescription Review](screenshots/08-prescription-review.png)
-![Delivery Update](screenshots/09-delivery-update.png)
-```
-
-## Demo Video Flow
-
-Recommended 2-4 minute demo flow:
-
-1. Open the app and explain customer-first home screen.
-2. Browse medicines and filter by category.
-3. Open a medicine detail page.
-4. Add medicine to cart.
-5. Upload prescription for prescription-required medicine.
-6. Place an order.
-7. Track the order by phone number.
-8. Log in as pharmacy staff.
-9. Approve the prescription.
-10. Update order status, rider pickup time, and delivery ETA.
-11. Return to customer tracking and show updated status.
-
 ## Testing
 
 The project was checked with:
