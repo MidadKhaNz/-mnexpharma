@@ -320,15 +320,22 @@ function openEdit(s)   { if(!s) return; editSup.value=s; form.value={...s}; show
 function openDelete(s) { deleteSup.value=s; showDelete.value=true }
 
 async function submitForm() {
-  formLoading.value=true; await new Promise(r=>setTimeout(r,600))
-  if(editSup.value) { const idx=store.suppliers.findIndex(s=>s.id===editSup.value.id); if(idx!==-1) store.suppliers[idx]={...store.suppliers[idx],...form.value} }
-  else store.suppliers.unshift({...form.value,id:Date.now()})
-  formLoading.value=false; showForm.value=false
+  formLoading.value = true
+  try {
+    await store.saveSupplier(form.value)
+    showForm.value = false
+  } finally {
+    formLoading.value = false
+  }
 }
 async function confirmDelete() {
-  deleteLoading.value=true; await new Promise(r=>setTimeout(r,500))
-  store.suppliers=store.suppliers.filter(s=>s.id!==deleteSup.value.id)
-  deleteLoading.value=false; showDelete.value=false
+  deleteLoading.value = true
+  try {
+    await store.deleteSupplier(deleteSup.value.id)
+    showDelete.value = false
+  } finally {
+    deleteLoading.value = false
+  }
 }
 </script>
 

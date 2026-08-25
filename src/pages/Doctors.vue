@@ -32,9 +32,10 @@
 
 <script setup>
 import { computed } from 'vue'
-import { mockDoctors } from '@/data/mockData.js'
+import { usePharmacyStore } from '@/stores/pharmacyStore.js'
 import BaseButton from '@/components/common/BaseButton.vue'
 import { PlusIcon } from '@heroicons/vue/24/outline'
 
-const doctors = computed(() => mockDoctors)
+const store = usePharmacyStore()
+const doctors = computed(() => store.doctors)
 </script>

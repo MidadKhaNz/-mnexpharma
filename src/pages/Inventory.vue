@@ -393,7 +393,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { usePharmacyStore }   from '@/stores/pharmacyStore.js'
-import { inventoryTimeline, medicineCategories, mockSuppliers } from '@/data/mockData.js'
+import { inventoryTimeline, medicineCategories } from '@/data/mockData.js'
 import BaseModal from '@/components/common/BaseModal.vue'
 import {
   ArrowDownTrayIcon, DocumentArrowDownIcon, AdjustmentsHorizontalIcon,
@@ -405,7 +405,7 @@ import {
 // ── Store ──────────────────────────────────────────────────────────────────
 const store       = usePharmacyStore()
 const medicines   = computed(() => store.medicines)
-const suppliers   = mockSuppliers
+const suppliers   = computed(() => store.suppliers)
 const categories  = medicineCategories
 const timeline    = inventoryTimeline
 
@@ -532,7 +532,7 @@ const categoryBreakdown = computed(() => {
 })
 
 // ── Styling helpers ────────────────────────────────────────────────────────
-function supplierName(id) { return suppliers.find(s => s.id === id)?.name ?? '—' }
+function supplierName(id) { return suppliers.value.find(s => s.id === id)?.name ?? '—' }
 
 function stockNumColor(med) {
   const s = invStatusLabel(med)
@@ -625,18 +625,21 @@ const adjustForm = ref({ medicine_id: '', type: 'add', qty: '', note: '' })
 async function submitAdjustment() {
   if (!adjustForm.value.medicine_id || !adjustForm.value.qty) return
   adjustLoading.value = true
-  await new Promise(r => setTimeout(r, 500))
-  const med = store.medicines.find(m => m.id === adjustForm.value.medicine_id)
-  if (med) {
-    let newStock = med.stock
-    if (adjustForm.value.type === 'add')    newStock += adjustForm.value.qty
-    if (adjustForm.value.type === 'remove') newStock = Math.max(0, newStock - adjustForm.value.qty)
-    if (adjustForm.value.type === 'set')    newStock = adjustForm.value.qty
-    store.updateMedicine({ ...med, stock: newStock })
+  try {
+    const med = store.medicines.find(m => m.id === adjustForm.value.medicine_id)
+    const qty = Number(adjustForm.value.qty)
+    if (med) {
+      let newStock = med.stock
+      if (adjustForm.value.type === 'add')    newStock += qty
+      if (adjustForm.value.type === 'remove') newStock = Math.max(0, newStock - qty)
+      if (adjustForm.value.type === 'set')    newStock = qty
+      await store.updateMedicine({ ...med, stock: newStock })
+    }
+    showAdjustModal.value = false
+    adjustForm.value = { medicine_id: '', type: 'add', qty: '', note: '' }
+  } finally {
+    adjustLoading.value = false
   }
-  adjustLoading.value = false
-  showAdjustModal.value = false
-  adjustForm.value = { medicine_id: '', type: 'add', qty: '', note: '' }
 }
 
 // ── Exports ────────────────────────────────────────────────────────────────

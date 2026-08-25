@@ -1,24 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { api } from '@/services/api.js'
 
 export const useAuthStore = defineStore('auth', () => {
-  // ---------------------------------------------------------------------------
-  // State
-  // ---------------------------------------------------------------------------
-  const user = ref({
-    id: 1,
-    name: 'Admin User',
-    email: 'admin@mnexpharma.com',
-    role: 'Super Admin',
-    avatar: null
-  })
-  const token = ref(null)
+  const savedUser = localStorage.getItem('mnex_user')
+  const user = ref(savedUser ? JSON.parse(savedUser) : null)
+  const token = ref(localStorage.getItem('mnex_token'))
   const isLoading = ref(false)
   const error = ref(null)
 
-  // ---------------------------------------------------------------------------
-  // Getters
-  // ---------------------------------------------------------------------------
   const isAuthenticated = computed(() => !!user.value)
   const userInitials = computed(() => {
     if (!user.value?.name) return 'AU'
@@ -31,26 +21,30 @@ export const useAuthStore = defineStore('auth', () => {
   })
   const userRole = computed(() => user.value?.role ?? '')
 
-  // ---------------------------------------------------------------------------
-  // Actions  (wire to Laravel Sanctum / JWT later)
-  // ---------------------------------------------------------------------------
   async function login(credentials) {
     isLoading.value = true
     error.value = null
     try {
-      // TODO: POST /api/auth/login
-      console.log('Login with', credentials)
+      const response = await api.post('/auth/login', credentials)
+      token.value = response.token
+      user.value = response.user
+      localStorage.setItem('mnex_token', response.token)
+      localStorage.setItem('mnex_user', JSON.stringify(response.user))
+      return response
     } catch (err) {
       error.value = err?.message ?? 'Login failed'
+      throw err
     } finally {
       isLoading.value = false
     }
   }
 
   async function logout() {
-    // TODO: POST /api/auth/logout
+    await api.post('/auth/logout', {}).catch(() => {})
     user.value = null
     token.value = null
+    localStorage.removeItem('mnex_token')
+    localStorage.removeItem('mnex_user')
   }
 
   function clearError() {

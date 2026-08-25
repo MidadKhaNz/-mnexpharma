@@ -450,7 +450,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { usePharmacyStore } from '@/stores/pharmacyStore.js'
-import { medicineCategories, mockSuppliers } from '@/data/mockData.js'
+import { medicineCategories } from '@/data/mockData.js'
 import BaseModal from '@/components/common/BaseModal.vue'
 import {
   PlusIcon, MagnifyingGlassIcon, ArrowDownTrayIcon, ArrowsUpDownIcon,
@@ -474,7 +474,7 @@ const loading        = ref(false)
 
 // ── Static data ────────────────────────────────────────────────────────────
 const categories  = medicineCategories
-const suppliers   = mockSuppliers
+const suppliers   = computed(() => store.suppliers)
 const dosageForms = ['Tablet','Capsule','Syrup','Injection','Cream','Ointment','Eye Drop','Inhaler','Drop','Suspension','Powder','Gel']
 
 // ── Quick filter chips ─────────────────────────────────────────────────────
@@ -566,7 +566,7 @@ function setSort(key) {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function supplierName(id) {
-  return suppliers.find(s => s.id === id)?.name ?? '—'
+  return suppliers.value.find(s => s.id === id)?.name ?? '—'
 }
 
 function medStatus(med) {

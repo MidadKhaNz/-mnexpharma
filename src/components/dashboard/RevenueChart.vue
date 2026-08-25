@@ -11,9 +11,11 @@ import {
   Chart as ChartJS,
   ArcElement, Tooltip, Legend
 } from 'chart.js'
-import { salesByCategoryData } from '@/data/mockData.js'
+import { usePharmacyStore } from '@/stores/pharmacyStore.js'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
+const store = usePharmacyStore()
+const salesByCategoryData = computed(() => store.reports?.sales_by_category ?? { labels: [], data: [] })
 
 const COLORS = [
   '#0F766E','#14B8A6','#3B82F6','#F59E0B','#EF4444',
@@ -22,10 +24,10 @@ const COLORS = [
 ]
 
 const chartData = computed(() => ({
-  labels: salesByCategoryData.labels,
+  labels: salesByCategoryData.value.labels,
   datasets: [{
-    data: salesByCategoryData.data,
-    backgroundColor: COLORS.slice(0, salesByCategoryData.labels.length),
+    data: salesByCategoryData.value.data,
+    backgroundColor: COLORS.slice(0, salesByCategoryData.value.labels.length),
     borderColor: '#fff',
     borderWidth: 3,
     hoverBorderColor: '#fff',

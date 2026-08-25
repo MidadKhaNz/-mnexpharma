@@ -315,17 +315,25 @@
             </div>
           </div>
 
+          <div v-if="saleError" class="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+            {{ saleError }}
+          </div>
+
+          <p v-if="!canCompleteSale" class="text-xs text-gray-400 leading-snug">
+            {{ saleButtonHint }}
+          </p>
+
           <!-- Complete Sale button -->
           <button
             @click="completeSale"
-            :disabled="!cart.length || saleLoading"
+            :disabled="!canCompleteSale"
             :class="['w-full h-12 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm',
-                     cart.length ? 'bg-brand-600 hover:bg-brand-700 text-white active:scale-[0.98]' : 'bg-gray-100 text-gray-400 cursor-not-allowed']"
+                     canCompleteSale ? 'bg-brand-600 hover:bg-brand-700 text-white active:scale-[0.98]' : 'bg-gray-100 text-gray-400 cursor-not-allowed']"
           >
             <span v-if="saleLoading" class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             <template v-else>
               <CheckCircleIcon class="w-5 h-5" />
-              Finalise Bill{{ cart.length ? ` · ৳${grandTotal.toFixed(2)}` : '' }}
+              {{ saleButtonLabel }}
             </template>
           </button>
         </div>
@@ -570,15 +578,17 @@ const filteredMeds = computed(() => {
   return store.medicines.filter(m => {
     if (activeCategory.value && m.category !== activeCategory.value) return false
     if (!q) return true
-    return m.name.toLowerCase().includes(q) ||
-           m.generic.toLowerCase().includes(q) ||
-           m.batch.toLowerCase().includes(q)
+    return text(m.name).toLowerCase().includes(q) ||
+           text(m.generic).toLowerCase().includes(q) ||
+           text(m.batch).toLowerCase().includes(q)
   })
 })
 
 function isExpired(med) {
   return med.status === 'expired' || new Date(med.expiry) < new Date()
 }
+function text(value, fallback = '') { return value === null || value === undefined || value === '' ? fallback : String(value) }
+function num(value) { return Number(value || 0) }
 
 // ── Cart ───────────────────────────────────────────────────────────────────
 const cart = ref([])
@@ -586,7 +596,8 @@ const cart = ref([])
 function isInCart(id) { return cart.value.some(c => c.id === id) }
 
 function addToCart(med) {
-  if (med.stock === 0 || isExpired(med)) return
+  saleError.value = ''
+  if (num(med.stock) === 0 || isExpired(med)) return
   const existing = cart.value.find(c => c.id === med.id)
   if (existing) {
     if (existing.qty < existing.maxStock) existing.qty++
@@ -594,8 +605,8 @@ function addToCart(med) {
   }
   cart.value.push({
     id: med.id, medicine_id: med.id,
-    name: med.name, generic: med.generic, category: med.category,
-    price: med.price, qty: 1, maxStock: med.stock,
+    name: text(med.name, 'Medicine'), generic: text(med.generic), category: text(med.category, 'Other'),
+    price: num(med.price), qty: 1, maxStock: num(med.stock),
   })
 }
 
@@ -609,6 +620,7 @@ const totalQty = computed(() => cart.value.reduce((s, c) => s + c.qty, 0))
 
 // ── Billing ────────────────────────────────────────────────────────────────
 const billing = ref({ customer: '', phone: '', discountPct: 0, vatPct: 0, paymentMethod: 'Cash', cashTendered: '' })
+const saleError = ref('')
 
 const paymentMethods = [
   { value: 'Cash',           label: 'Cash',          icon: BanknotesIcon         },
@@ -617,11 +629,21 @@ const paymentMethods = [
   { value: 'Bank Transfer',  label: 'Bank Transfer', icon: BuildingLibraryIcon   },
 ]
 
-const subtotal    = computed(() => cart.value.reduce((s, c) => s + c.price * c.qty, 0))
-const discountAmt = computed(() => subtotal.value * (billing.value.discountPct / 100))
-const vatAmt      = computed(() => (subtotal.value - discountAmt.value) * (billing.value.vatPct / 100))
+const subtotal    = computed(() => cart.value.reduce((s, c) => s + num(c.price) * num(c.qty), 0))
+const discountAmt = computed(() => subtotal.value * (num(billing.value.discountPct) / 100))
+const vatAmt      = computed(() => (subtotal.value - discountAmt.value) * (num(billing.value.vatPct) / 100))
 const grandTotal  = computed(() => Math.max(0, subtotal.value - discountAmt.value + vatAmt.value))
-const changeDue   = computed(() => (billing.value.cashTendered || 0) - grandTotal.value)
+const changeDue   = computed(() => (num(billing.value.cashTendered) || 0) - grandTotal.value)
+const cashIsEnough = computed(() => billing.value.paymentMethod !== 'Cash' || num(billing.value.cashTendered) >= grandTotal.value)
+const canCompleteSale = computed(() => cart.value.length > 0 && grandTotal.value > 0 && cashIsEnough.value && !saleLoading.value)
+const saleButtonLabel = computed(() => cart.value.length ? `Finalise Bill - BDT ${grandTotal.value.toFixed(2)}` : 'Finalise Bill')
+const saleButtonHint = computed(() => {
+  if (!cart.value.length) return 'Select at least one medicine to enable billing.'
+  if (grandTotal.value <= 0) return 'Grand total must be greater than zero.'
+  if (!cashIsEnough.value) return 'Cash tendered must be equal to or greater than the grand total.'
+  if (saleLoading.value) return 'Saving bill...'
+  return ''
+})
 
 // ── Complete Sale ──────────────────────────────────────────────────────────
 const saleLoading    = ref(false)
@@ -629,36 +651,54 @@ const showInvoice    = ref(false)
 const currentInvoice = ref(null)
 
 async function completeSale() {
-  if (!cart.value.length) return
-  saleLoading.value = true
-  await new Promise(r => setTimeout(r, 600))
-
-  const now  = new Date()
-  const sale = {
-    id:       store.nextInvoiceId(),
-    customer: billing.value.customer || 'Walk-in Patient',
-    phone:    billing.value.phone,
-    items:    cart.value.map(c => ({
-      medicine_id: c.medicine_id, name: c.name, generic: c.generic,
-      qty: c.qty, price: c.price,
-    })),
-    amount:   +subtotal.value.toFixed(2),
-    discount: +discountAmt.value.toFixed(2),
-    vat:      +vatAmt.value.toFixed(2),
-    total:    +grandTotal.value.toFixed(2),
-    payment:  billing.value.paymentMethod,
-    status:   'paid',
-    date:     now.toISOString().slice(0, 10),
-    time:     now.toTimeString().slice(0, 5),
+  saleError.value = ''
+  if (!cart.value.length) {
+    saleError.value = 'Please add at least one medicine to the cart first.'
+    return
+  }
+  if (grandTotal.value <= 0) {
+    saleError.value = 'Grand total must be greater than zero.'
+    return
+  }
+  if (!cashIsEnough.value) {
+    saleError.value = 'Cash tendered is less than the grand total.'
+    return
   }
 
-  store.addSale(sale)
-  currentInvoice.value = sale
-  saleLoading.value = false
-  showInvoice.value = true
+  saleLoading.value = true
+  try {
+    await new Promise(r => setTimeout(r, 250))
+
+    const now  = new Date()
+    const sale = {
+      id:       store.nextInvoiceId(),
+      customer: billing.value.customer || 'Walk-in Patient',
+      phone:    billing.value.phone,
+      items:    cart.value.map(c => ({
+        medicine_id: c.medicine_id, name: c.name, generic: c.generic,
+        qty: num(c.qty), price: num(c.price),
+      })),
+      amount:   +subtotal.value.toFixed(2),
+      discount: +discountAmt.value.toFixed(2),
+      vat:      +vatAmt.value.toFixed(2),
+      total:    +grandTotal.value.toFixed(2),
+      payment:  billing.value.paymentMethod,
+      status:   'paid',
+      date:     now.toISOString().slice(0, 10),
+      time:     now.toTimeString().slice(0, 5),
+    }
+
+    currentInvoice.value = await store.addSale(sale)
+    showInvoice.value = true
+  } catch (error) {
+    saleError.value = error?.message || 'Could not finalise bill. Please check stock and backend connection.'
+  } finally {
+    saleLoading.value = false
+  }
 }
 
 function newSale() {
+  saleError.value = ''
   showInvoice.value = false
   clearCart()
   billing.value = { customer: '', phone: '', discountPct: 0, vatPct: 0, paymentMethod: 'Cash', cashTendered: '' }

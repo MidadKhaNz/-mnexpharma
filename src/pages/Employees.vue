@@ -36,13 +36,14 @@
 
 <script setup>
 import { computed } from 'vue'
-import { mockEmployees } from '@/data/mockData.js'
+import { usePharmacyStore } from '@/stores/pharmacyStore.js'
 import BaseCard   from '@/components/common/BaseCard.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable  from '@/components/common/BaseTable.vue'
 import { PlusIcon, PencilIcon } from '@heroicons/vue/24/outline'
 
-const employees = computed(() => mockEmployees)
+const store = usePharmacyStore()
+const employees = computed(() => store.employees)
 
 const columns = [
   { key: 'name',   label: 'Employee' },

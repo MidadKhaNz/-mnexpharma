@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore.js'
 
 // Lazy-load every page for optimal code splitting
+const Login         = () => import('@/pages/Login.vue')
 const Dashboard     = () => import('@/pages/Dashboard.vue')
 const Medicines     = () => import('@/pages/Medicines.vue')
 const Inventory     = () => import('@/pages/Inventory.vue')
@@ -18,6 +20,7 @@ const Settings      = () => import('@/pages/Settings.vue')
 const NotFound      = () => import('@/pages/NotFound.vue')
 
 const routes = [
+  { path: '/login',         name: 'login',         component: Login,         meta: { title: 'Login', public: true } },
   { path: '/',               name: 'dashboard',     component: Dashboard,     meta: { title: 'Dashboard' }         },
   { path: '/medicines',      name: 'medicines',     component: Medicines,     meta: { title: 'Medicines' }         },
   { path: '/inventory',      name: 'inventory',     component: Inventory,     meta: { title: 'Inventory' }         },
@@ -39,6 +42,13 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
   scrollBehavior: () => ({ top: 0, behavior: 'smooth' })
+})
+
+router.beforeEach((to) => {
+  const authStore = useAuthStore()
+  if (!to.meta.public && !authStore.isAuthenticated) return { name: 'login' }
+  if (to.name === 'login' && authStore.isAuthenticated) return { name: 'dashboard' }
+  return true
 })
 
 // Update document title on route change

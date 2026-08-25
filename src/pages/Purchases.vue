@@ -32,34 +32,34 @@
 </template>
 
 <script setup>
-import BaseCard   from '@/components/common/BaseCard.vue'
+import { computed } from 'vue'
+import { usePharmacyStore } from '@/stores/pharmacyStore.js'
+import BaseCard from '@/components/common/BaseCard.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
-import BaseTable  from '@/components/common/BaseTable.vue'
+import BaseTable from '@/components/common/BaseTable.vue'
 import { PlusIcon } from '@heroicons/vue/24/outline'
 
-const summary = [
-  { label: 'Orders This Month', value: '24',         color: 'text-gray-900'  },
-  { label: 'Total Amount',      value: '৳ 3,40,000', color: 'text-brand-600' },
-  { label: 'Pending Delivery',  value: '6',          color: 'text-amber-600' },
-  { label: 'Overdue Payments',  value: '2',          color: 'text-red-600'   }
-]
+const store = usePharmacyStore()
+
+const summary = computed(() => store.purchaseSummary)
+const rows = computed(() => store.purchases.map((purchase) => ({
+  ...purchase,
+  amount: `BDT ${Number(purchase.amount || 0).toLocaleString('en-US')}`,
+})))
 
 const columns = [
-  { key: 'po',       label: 'PO Number' },
+  { key: 'po', label: 'PO Number' },
   { key: 'supplier', label: 'Supplier' },
-  { key: 'date',     label: 'Order Date' },
-  { key: 'amount',   label: 'Amount', align: 'right' },
-  { key: 'status',   label: 'Status' }
+  { key: 'date', label: 'Order Date' },
+  { key: 'amount', label: 'Amount', align: 'right' },
+  { key: 'status', label: 'Status' },
 ]
 
-const rows = [
-  { id: 1, po: 'PO-2026-045', supplier: 'Square Pharma',  date: '2026-06-20', amount: '৳ 48,500', status: 'received' },
-  { id: 2, po: 'PO-2026-044', supplier: 'Beximco Pharma', date: '2026-06-18', amount: '৳ 72,000', status: 'pending'  },
-  { id: 3, po: 'PO-2026-043', supplier: 'Incepta Pharma', date: '2026-06-15', amount: '৳ 31,200', status: 'received' },
-  { id: 4, po: 'PO-2026-042', supplier: 'Opsonin Pharma', date: '2026-06-10', amount: '৳ 19,800', status: 'overdue'  }
-]
-
-function statusClass(s) {
-  return { received: 'bg-green-100 text-green-700', pending: 'bg-yellow-100 text-yellow-700', overdue: 'bg-red-100 text-red-700' }[s] ?? 'bg-gray-100 text-gray-500'
+function statusClass(status) {
+  return {
+    received: 'bg-green-100 text-green-700',
+    pending: 'bg-yellow-100 text-yellow-700',
+    overdue: 'bg-red-100 text-red-700',
+  }[status] ?? 'bg-gray-100 text-gray-500'
 }
 </script>

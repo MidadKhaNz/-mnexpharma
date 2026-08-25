@@ -9,6 +9,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "api": "node server/index.js",
+    "fullstack": "npm run build && node server/index.js",
+    "seed": "node server/seed.js",
     "build": "vite build",
     "preview": "vite preview"
   },

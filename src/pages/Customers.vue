@@ -83,23 +83,23 @@
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
                   <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0', avatarColor(cust.id)]">
-                    {{ cust.name.charAt(0) }}
+                    {{ initials(cust.name) }}
                   </div>
                   <div>
-                    <p class="font-semibold text-gray-900 leading-tight">{{ cust.name }}</p>
-                    <p class="text-xs text-gray-400 truncate max-w-[150px]">{{ cust.email }}</p>
+                    <p class="font-semibold text-gray-900 leading-tight">{{ text(cust.name) }}</p>
+                    <p class="text-xs text-gray-400 truncate max-w-[150px]">{{ text(cust.email) }}</p>
                   </div>
                 </div>
               </td>
-              <td class="px-4 py-3 text-gray-600 hidden md:table-cell">{{ cust.phone }}</td>
-              <td class="px-4 py-3 text-gray-500 text-xs truncate max-w-[160px] hidden lg:table-cell">{{ cust.address }}</td>
-              <td class="px-4 py-3 text-right font-semibold text-gray-900">৳{{ cust.total_purchases.toLocaleString('en-US',{maximumFractionDigits:0}) }}</td>
+              <td class="px-4 py-3 text-gray-600 hidden md:table-cell">{{ text(cust.phone) }}</td>
+              <td class="px-4 py-3 text-gray-500 text-xs truncate max-w-[160px] hidden lg:table-cell">{{ text(cust.address) }}</td>
+              <td class="px-4 py-3 text-right font-semibold text-gray-900">৳{{ money(cust.total_purchases) }}</td>
               <td class="px-4 py-3 text-center hidden sm:table-cell">
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-50 text-yellow-700 rounded-full text-xs font-bold ring-1 ring-yellow-200">
-                  ⭐ {{ cust.loyalty_points.toLocaleString() }}
+                  ⭐ {{ num(cust.loyalty_points).toLocaleString() }}
                 </span>
               </td>
-              <td class="px-4 py-3 text-center text-gray-600 hidden md:table-cell">{{ cust.visits }}</td>
+              <td class="px-4 py-3 text-center text-gray-600 hidden md:table-cell">{{ num(cust.visits) }}</td>
               <td class="px-4 py-3 text-center">
                 <span :class="['inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold',
                   cust.type==='returning'?'bg-brand-50 text-brand-700 ring-1 ring-brand-200':'bg-green-50 text-green-700 ring-1 ring-green-200']">
@@ -134,14 +134,14 @@
       <div class="space-y-3">
         <div v-for="(cust, i) in topCustomers" :key="cust.id" class="flex items-center gap-3">
           <span class="text-xs font-bold text-gray-400 w-5 text-right shrink-0">{{ i+1 }}</span>
-          <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0', avatarColor(cust.id)]">{{ cust.name.charAt(0) }}</div>
+          <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0', avatarColor(cust.id)]">{{ initials(cust.name) }}</div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between mb-1">
-              <p class="text-sm font-semibold text-gray-900 truncate">{{ cust.name }}</p>
-              <p class="text-sm font-bold text-brand-700 shrink-0 ml-2">৳{{ cust.total_purchases.toLocaleString('en-US',{maximumFractionDigits:0}) }}</p>
+              <p class="text-sm font-semibold text-gray-900 truncate">{{ text(cust.name) }}</p>
+              <p class="text-sm font-bold text-brand-700 shrink-0 ml-2">৳{{ money(cust.total_purchases) }}</p>
             </div>
             <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div class="h-1.5 bg-brand-500 rounded-full transition-all duration-700" :style="`width:${(cust.total_purchases/topCustomers[0].total_purchases)*100}%`" />
+              <div class="h-1.5 bg-brand-500 rounded-full transition-all duration-700" :style="`width:${(num(cust.total_purchases)/Math.max(num(topCustomers[0]?.total_purchases),1))*100}%`" />
             </div>
           </div>
         </div>
@@ -165,11 +165,11 @@
           <span class="text-2xl">⭐</span>
           <div>
             <p class="text-xs text-yellow-700 font-semibold">Loyalty Points</p>
-            <p class="text-xl font-extrabold text-yellow-800">{{ viewCust.loyalty_points.toLocaleString() }} pts</p>
+            <p class="text-xl font-extrabold text-yellow-800">{{ num(viewCust.loyalty_points).toLocaleString() }} pts</p>
           </div>
           <div class="ml-auto text-right">
             <p class="text-xs text-yellow-600">Equivalent to</p>
-            <p class="text-sm font-bold text-yellow-700">৳{{ (viewCust.loyalty_points*0.5).toFixed(0) }} discount</p>
+            <p class="text-sm font-bold text-yellow-700">৳{{ (num(viewCust.loyalty_points)*0.5).toFixed(0) }} discount</p>
           </div>
         </div>
       </div>
@@ -253,14 +253,15 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { mockCustomers } from '@/data/mockData.js'
+import { usePharmacyStore } from '@/stores/pharmacyStore.js'
 import BaseModal from '@/components/common/BaseModal.vue'
 import {
   PlusIcon, MagnifyingGlassIcon, EyeIcon, PencilIcon, TrashIcon, UsersIcon,
   UserGroupIcon, SparklesIcon, CurrencyDollarIcon, ChartBarIcon
 } from '@heroicons/vue/24/outline'
 
-const customers = ref(mockCustomers.map(c=>({...c})))
+const store = usePharmacyStore()
+const customers = computed(() => store.customers)
 const search      = ref('')
 const filterType   = ref('')
 const filterStatus = ref('')
@@ -272,12 +273,12 @@ const summaryCards = computed(() => {
   const total     = customers.value.length
   const returning = customers.value.filter(c=>c.type==='returning').length
   const newC      = customers.value.filter(c=>c.type==='new').length
-  const revenue   = customers.value.reduce((s,c)=>s+c.total_purchases,0)
+  const revenue   = customers.value.reduce((s,c)=>s+num(c.total_purchases),0)
   return [
     { label:'Total Customers',    value:total,     icon:UsersIcon,          iconBg:'bg-brand-50', iconColor:'text-brand-600', border:'border-gray-100',   blob:'bg-brand-400' },
     { label:'Returning Customers',value:returning, icon:UserGroupIcon,       iconBg:'bg-blue-50',  iconColor:'text-blue-600',  border:'border-blue-100',   blob:'bg-blue-400'  },
     { label:'New Customers',      value:newC,      icon:SparklesIcon,        iconBg:'bg-green-50', iconColor:'text-green-600', border:'border-green-100',  blob:'bg-green-400' },
-    { label:'Customer Revenue',   value:'৳'+revenue.toLocaleString('en-US',{maximumFractionDigits:0}), icon:CurrencyDollarIcon, iconBg:'bg-amber-50', iconColor:'text-amber-600', border:'border-amber-100', blob:'bg-amber-400' },
+    { label:'Customer Revenue',   value:'৳'+money(revenue), icon:CurrencyDollarIcon, iconBg:'bg-amber-50', iconColor:'text-amber-600', border:'border-amber-100', blob:'bg-amber-400' },
   ]
 })
 
@@ -286,8 +287,8 @@ const filtered = computed(() => {
   let list = customers.value
   if(filterType.value)   list=list.filter(c=>c.type===filterType.value)
   if(filterStatus.value) list=list.filter(c=>c.status===filterStatus.value)
-  if(q) list=list.filter(c=>c.name.toLowerCase().includes(q)||c.phone?.includes(q)||c.email?.toLowerCase().includes(q))
-  if(sortKey.value) list=[...list].sort((a,b)=>b[sortKey.value]-a[sortKey.value])
+  if(q) list=list.filter(c=>String(c.name || '').toLowerCase().includes(q)||String(c.phone || '').includes(q)||String(c.email || '').toLowerCase().includes(q))
+  if(sortKey.value) list=[...list].sort((a,b)=>num(b[sortKey.value])-num(a[sortKey.value]))
   return list
 })
 const totalPages  = computed(() => Math.max(1, Math.ceil(filtered.value.length/perPage)))
@@ -299,10 +300,14 @@ const pageNums    = computed(() => {
   if(p>=tp-2) return [1,'…',tp-2,tp-1,tp]
   return [1,'…',p,'…',tp]
 })
-const topCustomers = computed(() => [...customers.value].sort((a,b)=>b.total_purchases-a.total_purchases).slice(0,8))
+const topCustomers = computed(() => [...customers.value].sort((a,b)=>num(b.total_purchases)-num(a.total_purchases)).slice(0,8))
 
 const AVATAR_COLORS=['bg-brand-100 text-brand-700','bg-purple-100 text-purple-700','bg-blue-100 text-blue-700','bg-green-100 text-green-700','bg-rose-100 text-rose-700','bg-amber-100 text-amber-700','bg-teal-100 text-teal-700']
-function avatarColor(id){ return AVATAR_COLORS[(id-1)%AVATAR_COLORS.length] }
+function text(value, fallback = '—') { return value === null || value === undefined || value === '' ? fallback : String(value) }
+function num(value) { return Number(value || 0) }
+function money(value) { return num(value).toLocaleString('en-US', { maximumFractionDigits: 0 }) }
+function initials(value) { return text(value, 'C').charAt(0).toUpperCase() }
+function avatarColor(id){ return AVATAR_COLORS[(num(id)-1)%AVATAR_COLORS.length] ?? AVATAR_COLORS[0] }
 
 const showView=ref(false); const viewCust=ref(null)
 const showForm=ref(false); const editCust=ref(null)
@@ -311,12 +316,12 @@ const formLoading=ref(false); const deleteLoading=ref(false)
 const form=ref({})
 
 const viewRows = computed(()=> viewCust.value ? [
-  {l:'Phone',           v:viewCust.value.phone},
-  {l:'Email',           v:viewCust.value.email},
-  {l:'Address',         v:viewCust.value.address},
-  {l:'Last Visit',      v:viewCust.value.last_visit},
-  {l:'Total Visits',    v:viewCust.value.visits+' visits'},
-  {l:'Total Purchases', v:'৳'+viewCust.value.total_purchases.toLocaleString('en-US',{maximumFractionDigits:0}),color:'text-brand-700'},
+  {l:'Phone',           v:text(viewCust.value.phone)},
+  {l:'Email',           v:text(viewCust.value.email)},
+  {l:'Address',         v:text(viewCust.value.address)},
+  {l:'Last Visit',      v:text(viewCust.value.last_visit)},
+  {l:'Total Visits',    v:num(viewCust.value.visits)+' visits'},
+  {l:'Total Purchases', v:'৳'+money(viewCust.value.total_purchases),color:'text-brand-700'},
 ] : [])
 
 function openView(c)   { viewCust.value=c; showView.value=true }
@@ -325,15 +330,22 @@ function openEdit(c)   { if(!c)return; editCust.value=c; form.value={...c}; show
 function openDelete(c) { deleteCust.value=c; showDelete.value=true }
 
 async function submitForm() {
-  formLoading.value=true; await new Promise(r=>setTimeout(r,600))
-  if(editCust.value){ const idx=customers.value.findIndex(c=>c.id===editCust.value.id); if(idx!==-1) customers.value[idx]={...customers.value[idx],...form.value} }
-  else customers.value.unshift({...form.value,id:Date.now()})
-  formLoading.value=false; showForm.value=false
+  formLoading.value = true
+  try {
+    await store.saveCustomer(form.value)
+    showForm.value = false
+  } finally {
+    formLoading.value = false
+  }
 }
 async function confirmDelete() {
-  deleteLoading.value=true; await new Promise(r=>setTimeout(r,500))
-  customers.value=customers.value.filter(c=>c.id!==deleteCust.value.id)
-  deleteLoading.value=false; showDelete.value=false
+  deleteLoading.value = true
+  try {
+    await store.deleteCustomer(deleteCust.value.id)
+    showDelete.value = false
+  } finally {
+    deleteLoading.value = false
+  }
 }
 </script>
 

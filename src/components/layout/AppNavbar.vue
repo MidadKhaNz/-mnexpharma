@@ -103,7 +103,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore.js'
 import { usePharmacyStore } from '@/stores/pharmacyStore.js'
 import {
@@ -114,6 +114,7 @@ import {
 defineEmits(['toggle-sidebar', 'open-mobile-menu'])
 
 const route         = useRoute()
+const router        = useRouter()
 const authStore     = useAuthStore()
 const pharmacyStore = usePharmacyStore()
 
@@ -142,9 +143,10 @@ const breadcrumb = computed(() => {
   return map[route.path] ?? ''
 })
 
-function handleLogout() {
+async function handleLogout() {
   userMenuOpen.value = false
-  authStore.logout()
+  await authStore.logout()
+  router.push({ name: 'login' })
 }
 
 function handleClickOutside(e) {

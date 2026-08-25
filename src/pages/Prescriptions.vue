@@ -242,7 +242,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { mockPrescriptions } from '@/data/mockData.js'
+import { usePharmacyStore } from '@/stores/pharmacyStore.js'
 import BaseModal from '@/components/common/BaseModal.vue'
 import {
   ArrowUpTrayIcon, MagnifyingGlassIcon, EyeIcon, BeakerIcon,
@@ -250,7 +250,8 @@ import {
   CheckBadgeIcon, ClipboardDocumentListIcon
 } from '@heroicons/vue/24/outline'
 
-const prescriptions = ref(mockPrescriptions.map(p=>({...p})))
+const store = usePharmacyStore()
+const prescriptions = computed(() => store.prescriptions)
 const search        = ref('')
 const filterStatus  = ref('')
 const page          = ref(1)
@@ -302,16 +303,19 @@ const uploadForm=ref({patient:'',phone:'',doctor:'',notes:''})
 
 function openView(rx){ viewRx.value=rx; showDetail.value=true }
 
-function updateStatus(rx, newStatus){
-  const idx=prescriptions.value.findIndex(p=>p.id===rx.id)
-  if(idx!==-1){ prescriptions.value[idx]={...prescriptions.value[idx],status:newStatus,pharmacist:newStatus==='dispensed'?'Roni Ahmed':prescriptions.value[idx].pharmacist} }
+async function updateStatus(rx, newStatus){
+  await store.updatePrescriptionStatus(
+    rx.id,
+    newStatus,
+    newStatus === 'dispensed' ? 'Roni Ahmed' : rx.pharmacist,
+  )
 }
 
 function handleDrop(e){ const f=e.dataTransfer.files[0]; if(f) uploadedFile.value=f.name }
 
 async function submitUpload(){
   if(!uploadForm.value.patient) return
-  uploadLoading.value=true; await new Promise(r=>setTimeout(r,700))
+  uploadLoading.value=true
   const newRx = {
     id: `RX-2026-${String(prescriptions.value.length+1).padStart(3,'0')}`,
     patient: uploadForm.value.patient, patient_phone: uploadForm.value.phone,
@@ -319,9 +323,13 @@ async function submitUpload(){
     date: new Date().toISOString().slice(0,10),
     status: 'pending', medicines: [], notes: uploadForm.value.notes, pharmacist: null,
   }
-  prescriptions.value.unshift(newRx)
-  uploadLoading.value=false; showUpload.value=false
-  uploadForm.value={patient:'',phone:'',doctor:'',notes:''}; uploadedFile.value=''
+  try {
+    await store.savePrescription(newRx)
+    showUpload.value=false
+    uploadForm.value={patient:'',phone:'',doctor:'',notes:''}; uploadedFile.value=''
+  } finally {
+    uploadLoading.value=false
+  }
 }
 </script>
 

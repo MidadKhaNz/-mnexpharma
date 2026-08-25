@@ -185,7 +185,6 @@ import {
   BarElement, ArcElement, Title, Tooltip, Legend, Filler
 } from 'chart.js'
 import { usePharmacyStore } from '@/stores/pharmacyStore.js'
-import { mockCustomers, monthlySalesData, salesByCategoryData } from '@/data/mockData.js'
 import { ArrowDownTrayIcon, DocumentArrowDownIcon, CurrencyDollarIcon, ShoppingCartIcon, BeakerIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler)
@@ -194,6 +193,8 @@ const store  = usePharmacyStore()
 const period = ref('monthly')
 const periods = [{ v:'daily',l:'Daily' },{ v:'weekly',l:'Weekly' },{ v:'monthly',l:'Monthly' }]
 const periodLabel = computed(() => ({ daily:'Today', weekly:'This Week', monthly:'This Month' }[period.value]))
+const monthlyReport = computed(() => store.reports?.monthly_sales ?? { labels: [], sales: [], revenue: [] })
+const categoryReport = computed(() => store.reports?.sales_by_category ?? { labels: [], data: [] })
 
 const PURCHASE_BASE = [82000,64000,53000,28000,71000,95000,46000,31000,55000,120000,43000,22000,18000,67000,58000,25000,39000,14000,48000,33000]
 const DUES_BASE     = [5200,0,3400,0,8100,0,2700,0,4300,0,1800,0,0,3600,0,2100,0,0,1500,0]
@@ -266,15 +267,15 @@ const topSuppliers = computed(()=>
     .slice(0,6)
 )
 const topCustomers = computed(()=>
-  [...mockCustomers].sort((a,b)=>b.total_purchases-a.total_purchases).slice(0,8)
+  [...store.customers].sort((a,b)=>b.total_purchases-a.total_purchases).slice(0,8)
 )
 
 // ── Charts ─────────────────────────────────────────────────────────────────
 const revenueChartData = computed(()=>({
-  labels: monthlySalesData.labels,
+  labels: monthlyReport.value.labels,
   datasets: [{
     label: 'Revenue (৳)',
-    data: monthlySalesData.revenue,
+    data: monthlyReport.value.revenue,
     borderColor: '#0F766E',
     backgroundColor: 'rgba(15,118,110,0.08)',
     borderWidth: 2.5,
@@ -286,10 +287,10 @@ const revenueChartData = computed(()=>({
 }))
 
 const salesBarData = computed(()=>({
-  labels: monthlySalesData.labels,
+  labels: monthlyReport.value.labels,
   datasets: [{
     label: 'Sales Count',
-    data: monthlySalesData.sales,
+    data: monthlyReport.value.sales,
     backgroundColor: CHART_COLORS.map(c=>c+'33'),
     borderColor: CHART_COLORS,
     borderWidth: 1.5,
@@ -298,17 +299,17 @@ const salesBarData = computed(()=>({
   }]
 }))
 
-const categoryLabels = salesByCategoryData.labels
-const categoryChartData = {
-  labels: salesByCategoryData.labels,
+const categoryLabels = computed(() => categoryReport.value.labels)
+const categoryChartData = computed(() => ({
+  labels: categoryReport.value.labels,
   datasets: [{
-    data: salesByCategoryData.data,
+    data: categoryReport.value.data,
     backgroundColor: CHART_COLORS,
     borderColor: '#fff',
     borderWidth: 2,
     hoverOffset: 6,
   }]
-}
+}))
 
 const lineOptions = {
   responsive: true, maintainAspectRatio: false,

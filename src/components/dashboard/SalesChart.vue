@@ -12,16 +12,19 @@ import {
   CategoryScale, LinearScale, PointElement, LineElement,
   Title, Tooltip, Legend, Filler
 } from 'chart.js'
-import { monthlySalesData } from '@/data/mockData.js'
+import { usePharmacyStore } from '@/stores/pharmacyStore.js'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 
+const store = usePharmacyStore()
+const monthlySalesData = computed(() => store.reports?.monthly_sales ?? { labels: [], sales: [], revenue: [] })
+
 const chartData = computed(() => ({
-  labels: monthlySalesData.labels,
+  labels: monthlySalesData.value.labels,
   datasets: [
     {
       label: 'Sales Count',
-      data: monthlySalesData.sales,
+      data: monthlySalesData.value.sales,
       borderColor: '#0F766E',
       backgroundColor: 'rgba(15, 118, 110, 0.08)',
       borderWidth: 2.5,
@@ -36,7 +39,7 @@ const chartData = computed(() => ({
     },
     {
       label: 'Revenue (৳)',
-      data: monthlySalesData.revenue,
+      data: monthlySalesData.value.revenue,
       borderColor: '#14B8A6',
       backgroundColor: 'rgba(20, 184, 166, 0.06)',
       borderWidth: 2,
